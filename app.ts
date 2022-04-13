@@ -5,5 +5,9 @@ let arr: {
 }
 
 
+const button = document.querySelector("a");
+button.addEventListener('click',() => {
+    console.log("test");
+})
 
 console.log(arr);
