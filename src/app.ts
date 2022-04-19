@@ -1,109 +1,86 @@
-class Test {
-  private name: string;
-  private constructor() {
-    this.name = "";
-  }
+// decorators
 
-  test() {
-    this.name = "test";
-  }
-}
-
-// const t = new Test();
-// t.name = "aa";
-
-interface Person {
-  name: string;
-  age: number;
-  greet: (phrase: string) => void;
-}
-
-let person1: Person = {
-  name: "Rafał",
-  age: 33,
-  greet: (phrase: string) => {
-    console.log(phrase);
-  },
+const Logger = (logString: string) => {
+  return function (target: Function) {
+    console.log(logString);
+    console.log(target);
+  };
 };
 
-person1.greet("test");
-// person1.name = "adam";
-interface I1 {
-  name: string;
-  age: number;
+function WithTemplate(template: string, hookId: string) {
+  return function (constructor: any) {
+    const element = document.getElementById(hookId);
+    const p = new constructor();
+    if (element) {
+      element.innerHTML = template;
+      element.querySelector("h1")!.textContent = p.name;
+    }
+  };
 }
 
-interface I2 {
-  name: string;
-  sex: string;
+// @Logger("LOGGING - PERSON")
+@WithTemplate("<h1>Person Object</h1>", "app")
+class Person {
+  name = "Max";
+  constructor() {
+    console.log("Creating person...");
+  }
 }
 
-class IXY implements I1, I2 {
-  name: string;
-  age: number;
-  sex: string;
+const p = new Person();
+console.log(p);
+
+// --
+
+function Log(target: any, propertyName: string | Symbol) {
+  console.log("Just log");
+  console.log(target);
+  console.log(propertyName);
+}
+
+class Product {
+  @Log
+  private _price: number;
+
+  @Log
+  private _state: boolean;
 
   constructor() {
-    this.name = "Adam";
-    this.age = 32;
-    this.sex = "F";
+    this._price = 10;
+    this._state = true;
   }
 }
 
-type Combinable = string | number;
-type Numeric = number | boolean;
+const pr = new Product();
 
-type Universal = Combinable & Numeric;
-
-const v: Universal = 5;
-
-interface ErrorContainer {
-  [key: string]: string;
-}
-
-const errorBag: ErrorContainer = {
-  email: "abc",
-  username: "must start with a capital",
-};
-
-const data = 0;
-console.log(data ?? data);
-
-// const names: Array<string> =['a',5];
-const promise: Promise<string> = new Promise((resolve, reject) => {
-  setTimeout(() => {
-    resolve("OK");
-  }, 1000);
-});
-
-promise.then((data) => {
-  console.log(data);
-});
-
-function merge<T, U>(a: T, b: U) {
-  return Object.assign(a, b);
-}
-
-const mergedObj = merge({ name: "Max" }, { age: 30 });
-console.log(mergedObj.name);
-
-interface Lengthy {
-  length: number;
-}
-
-function countAndDescribe<T extends Lengthy>(element: T): [T, string] {
-  let descriptionText = "No value";
-  if (element.length > 0) {
-    descriptionText = "Got " + element.length + " elements";
-  }
-  return [element, descriptionText];
-}
-
-function extractAndConvert<T extends object, U extends keyof T>(
-  obj: T,
-  key: U
+function Autobind(
+  target: any,
+  methodName: string,
+  descriptor: PropertyDescriptor
 ) {
-  return obj[key];
+  const originalMethod = descriptor.value;
+  const adjustedDescriptor: PropertyDescriptor = {
+    configurable: true,
+    enumerable: false,
+    get() {
+      const boundFn = originalMethod.bind(this);
+      return boundFn;
+    },
+  };
+  return adjustedDescriptor;
 }
 
-console.log(extractAndConvert({ name: "Rafał" }, "name"));
+class Printer {
+  message = "This works!";
+
+  @Autobind
+  showMessage() {
+    console.log(this);
+    console.log(this.message);
+  }
+}
+
+const printer = new Printer();
+// printer.showMessage();
+
+document.addEventListener("click", printer.showMessage);
